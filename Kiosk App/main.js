@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session } = require('electron');
+const { app, BrowserWindow, session, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -31,6 +31,7 @@ let serialScanIntervalId = null;
 let serialScanInProgress = false;
 let isTitleCardVisible = false;
 let titleCardLoadingPromise = null;
+let missingProjectsAlertShown = false;
 
 function resolveBackgroundImageParam(imagePath) {
   if (!imagePath || typeof imagePath !== 'string') {
@@ -383,6 +384,10 @@ function getCandidateProjectPaths() {
   try {
     const exeDir = path.dirname(process.execPath);
     pushUnique(path.join(exeDir, PROJECTS_FILE_NAME));
+    const appContentsDir = path.resolve(exeDir, '..');
+    pushUnique(path.join(appContentsDir, PROJECTS_FILE_NAME));
+    const appBundleDir = path.resolve(appContentsDir, '../..');
+    pushUnique(path.join(appBundleDir, PROJECTS_FILE_NAME));
   } catch {}
 
   if (!app.isPackaged) {
@@ -412,8 +417,35 @@ function loadProjectsData() {
   );
 }
 
+async function showMissingProjectsMessage(error) {
+  if (missingProjectsAlertShown) return;
+  missingProjectsAlertShown = true;
+  const message = error?.message ?? 'Unable to locate projects.json.';
+  const detail = [
+    'BrowserSelector looks for projects.json next to the executable, on your Desktop,',
+    'or in your Downloads folder. Add the file and restart the app.'
+  ].join(' ');
+
+  await dialog.showMessageBox({
+    type: 'warning',
+    title: 'projects.json Missing',
+    message,
+    detail,
+    buttons: ['Quit'],
+    defaultId: 0
+  });
+
+  app.quit();
+}
+
 app.whenReady().then(() => {
-  loadProjectsData();
+  try {
+    loadProjectsData();
+  } catch (err) {
+    showMissingProjectsMessage(err);
+    return;
+  }
+
   setupMediaPermissions(session.defaultSession);
   createWindow();
   startSerialMonitoring();

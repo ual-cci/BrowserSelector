@@ -28,7 +28,7 @@ BrowserSelector is a fullscreen Electron-based kiosk experience that showcases a
 - `config.titleCardDurationMs` controls how long the title card stays visible (defaults to 3000 ms).
 - `config.backgroundColor` sets the fallback color behind the title card (`#080808` by default).
 - `config.backgroundImagePath` can point to a local file (absolute or relative to `projects.json`) or a remote URL that will fill the viewport behind the card. Relative paths are resolved against the directory containing `projects.json`.
-- When packaged, the app searches for `projects.json` next to the executable, then in `~/Desktop` and `~/Downloads`.
+- When packaged, the app searches for `projects.json` next to the executable, inside the `.app/Contents` directory, alongside the `.app` bundle itself, and then in `~/Desktop` and `~/Downloads`.
 - Serial devices are scanned every 5 seconds; any device path containing `usbmodem` or `usb.modem` is considered a candidate.
 
 ## Credits
