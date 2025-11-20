@@ -29,6 +29,8 @@ const titleCardTemplatePath = path.join(
 let serialPort = null;
 let serialScanIntervalId = null;
 let serialScanInProgress = false;
+let isTitleCardVisible = false;
+let titleCardLoadingPromise = null;
 
 function resolveBackgroundImageParam(imagePath) {
   if (!imagePath || typeof imagePath !== 'string') {
@@ -71,6 +73,46 @@ function buildTitleCardUrl(project) {
   return url.toString();
 }
 
+function buildTitleCardPayload(project) {
+  return {
+    title: project.title ?? 'Untitled Project',
+    author: project.author ?? 'Unknown Author',
+    backgroundColor: config.backgroundColor ?? DEFAULT_CONFIG.backgroundColor,
+    backgroundImage: resolveBackgroundImageParam(
+      config.backgroundImagePath ?? DEFAULT_CONFIG.backgroundImagePath
+    )
+  };
+}
+
+function sendTitleCardUpdate(project) {
+  if (!mainWindow) return;
+  const payload = buildTitleCardPayload(project);
+  mainWindow.webContents.send('title-card:update', payload);
+}
+
+async function ensureTitleCardVisible(project) {
+  if (!mainWindow) return;
+  if (isTitleCardVisible && !titleCardLoadingPromise) {
+    return;
+  }
+  if (titleCardLoadingPromise) {
+    await titleCardLoadingPromise;
+    return;
+  }
+
+  const titleCardUrl = buildTitleCardUrl(project);
+  titleCardLoadingPromise = mainWindow
+    .loadURL(titleCardUrl)
+    .then(() => {
+      isTitleCardVisible = true;
+    })
+    .finally(() => {
+      titleCardLoadingPromise = null;
+    });
+
+  await titleCardLoadingPromise;
+}
+
 function getTitleCardDurationMs() {
   const duration = Number(config.titleCardDurationMs);
   if (Number.isFinite(duration) && duration > 0) {
@@ -84,12 +126,30 @@ function showProjectAfterTitleCard(project) {
     throw new Error('Main window is not available to display the project.');
   }
 
-  if (titleCardTimeoutId) clearTimeout(titleCardTimeoutId);
-  const titleCardUrl = buildTitleCardUrl(project);
-  mainWindow.loadURL(titleCardUrl);
-  titleCardTimeoutId = setTimeout(() => {
-    mainWindow.loadURL(project.url);
-  }, getTitleCardDurationMs());
+  if (titleCardTimeoutId) {
+    clearTimeout(titleCardTimeoutId);
+    titleCardTimeoutId = null;
+  }
+
+  void (async () => {
+    try {
+      await ensureTitleCardVisible(project);
+      sendTitleCardUpdate(project);
+    } catch (err) {
+      console.error('Failed to prepare title card:', err);
+      return;
+    }
+
+    titleCardTimeoutId = setTimeout(() => {
+      if (!mainWindow) return;
+      isTitleCardVisible = false;
+      mainWindow
+        .loadURL(project.url)
+        .catch(err =>
+          console.error('Failed to load project content URL:', err)
+        );
+    }, getTitleCardDurationMs());
+  })();
 }
 
 function loadProject(index) {

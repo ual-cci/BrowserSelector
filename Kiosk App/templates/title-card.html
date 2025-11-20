@@ -13,31 +13,59 @@
       </div>
     </div>
     <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        const params = new URLSearchParams(window.location.search);
-        const projectTitle = params.get('title') || 'Untitled Project';
-        const projectAuthor = params.get('author') || 'Unknown Author';
-        const backgroundColor = params.get('bgColor');
-        const backgroundImage = params.get('bgImage');
+      const { ipcRenderer } = (() => {
+        try {
+          return require('electron');
+        } catch {
+          return { ipcRenderer: null };
+        }
+      })();
+
+      function applyTitleCardState(state = {}) {
+        const {
+          title = 'Untitled Project',
+          author = 'Unknown Author',
+          backgroundColor,
+          backgroundImage
+        } = state;
 
         const titleEl = document.getElementById('projectTitle');
         const authorEl = document.getElementById('projectAuthor');
-
-        if (titleEl) titleEl.textContent = projectTitle;
-        if (authorEl) authorEl.textContent = projectAuthor;
-
         const bodyEl = document.body;
+
+        if (titleEl) titleEl.textContent = title;
+        if (authorEl) authorEl.textContent = author;
+
         if (bodyEl && backgroundColor) {
           bodyEl.style.backgroundColor = backgroundColor;
         }
-        if (bodyEl && backgroundImage) {
-          const escapedImage = backgroundImage.replace(/"/g, '\\"');
-          bodyEl.style.backgroundImage = `url("${escapedImage}")`;
-          bodyEl.style.backgroundSize = 'cover';
-          bodyEl.style.backgroundRepeat = 'no-repeat';
-          bodyEl.style.backgroundPosition = 'center';
-        } else if (bodyEl) {
-          bodyEl.style.backgroundImage = '';
+
+        if (bodyEl) {
+          if (backgroundImage) {
+            const escapedImage = backgroundImage.replace(/"/g, '\\"');
+            bodyEl.style.backgroundImage = `url("${escapedImage}")`;
+            bodyEl.style.backgroundSize = 'cover';
+            bodyEl.style.backgroundRepeat = 'no-repeat';
+            bodyEl.style.backgroundPosition = 'center';
+          } else {
+            bodyEl.style.backgroundImage = '';
+          }
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        applyTitleCardState({
+          title: params.get('title'),
+          author: params.get('author'),
+          backgroundColor: params.get('bgColor'),
+          backgroundImage: params.get('bgImage')
+        });
+
+        if (ipcRenderer && typeof ipcRenderer.on === 'function') {
+          ipcRenderer.on('title-card:update', (_event, payload) => {
+            applyTitleCardState(payload);
+          });
         }
       });
     </script>
