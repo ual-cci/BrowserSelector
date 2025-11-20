@@ -1,0 +1,30 @@
+{
+  "name": "browserselector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^39.2.3",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.browserselector.app",
+    "productName": "BrowserSelector",
+    "files": [
+      "**/*"
+    ],
+    "directories": {
+      "buildResources": "build"
+    }
+  },
+  "dependencies": {
+    "serialport": "^13.0.0"
+  }
+}

@@ -1,0 +1,162 @@
+{
+	"config": {
+		"titleCardDurationMs": 3000
+	},
+	"projects": [
+		{
+			"name": "The greatest project ever",
+			"author": "Tom Lynch",
+			"url": "https://webcamtests.com"
+		},
+		{
+			"name": "Another project",
+			"author": "Peter Mackenzie",
+			"url": "http://cci.to"
+		},
+		{
+			"name": "Best final project ever",
+			"author": "Iulia Ionescu",
+			"url": "http://gold.ac.uk"
+		},
+		{
+			"name": "MDN Web Docs",
+			"author": "Mozilla",
+			"url": "https://developer.mozilla.org"
+		},
+		{
+			"name": "Wikipedia",
+			"author": "Wikimedia Foundation",
+			"url": "https://www.wikipedia.org"
+		},
+		{
+			"name": "NASA",
+			"author": "NASA",
+			"url": "https://www.nasa.gov"
+		},
+		{
+			"name": "GitHub",
+			"author": "GitHub",
+			"url": "https://github.com"
+		},
+		{
+			"name": "BBC News",
+			"author": "BBC",
+			"url": "https://www.bbc.com/news"
+		},
+		{
+			"name": "Webcam",
+			"author": "Webcam",
+			"url": "https://vdo.ninja/?room=123123123123&password=1321231231231231213&host"
+		},
+		{
+			"name": "Three.js Journey Starter",
+			"author": "Bruno Simon",
+			"url": "https://threejs-journey.xyz/demo"
+		},
+		{
+			"name": "Webcam Motion Sketch",
+			"author": "Patricio Gonzalez Vivo",
+			"url": "https://patriciogonzalezvivo.com/2019/webcam-sketch/"
+		},
+		{
+			"name": "A-Frame VR Playground",
+			"author": "Mozilla Mixed Reality",
+			"url": "https://aframe.io/examples/showcase/helloworld/"
+		},
+		{
+			"name": "Chrome Music Lab: Kandinsky",
+			"author": "Google Creative Lab",
+			"url": "https://musiclab.chromeexperiments.com/Kandinsky/"
+		},
+		{
+			"name": "ToneMatrix Sequencer",
+			"author": "Andre Michelle",
+			"url": "https://tonematrix.audiotool.com/"
+		},
+		{
+			"name": "Patatap Keyboard Orchestra",
+			"author": "Jono Brandel",
+			"url": "https://www.patatap.com"
+		},
+		{
+			"name": "Lights Contacts",
+			"author": "UNIT9",
+			"url": "https://lightscontacts.com"
+		},
+		{
+			"name": "P5.js Web Editor",
+			"author": "Processing Foundation",
+			"url": "https://editor.p5js.org/p5/sketches"
+		},
+		{
+			"name": "Fluid Simulation",
+			"author": "Pavel Dobryakov",
+			"url": "https://paveldogreat.github.io/WebGL-Fluid-Simulation/"
+		},
+		{
+			"name": "Particle Love",
+			"author": "Justin Windle",
+			"url": "https://particles.jw.io"
+		},
+		{
+			"name": "Neo Brutalism Visualizer",
+			"author": "Resn",
+			"url": "https://www.resn.co.nz/experiments/neo-brutalism/"
+		},
+		{
+			"name": "Incredibox",
+			"author": "So Far So Good",
+			"url": "https://www.incredibox.com/demo/"
+		},
+		{
+			"name": "WebGL Water Ripple",
+			"author": "Felix Woitzel",
+			"url": "https://madebyevan.com/webgl-water/"
+		},
+		{
+			"name": "Sketchpad App",
+			"author": "Sketch.IO",
+			"url": "https://sketch.io/sketchpad/"
+		},
+		{
+			"name": "Cursor Parkour",
+			"author": "Neal Agarwal",
+			"url": "https://neal.fun/cursor-parkour/"
+		},
+		{
+			"name": "You Draw It",
+			"author": "Bloomberg Graphics",
+			"url": "https://www.bloomberg.com/graphics/you-draw-it/"
+		},
+		{
+			"name": "Interactive Globe",
+			"author": "WebGL Earth",
+			"url": "https://www.webglearth.com"
+		},
+		{
+			"name": "Generative Placeholders",
+			"author": "Manoloide",
+			"url": "https://generative-placeholders.glitch.me"
+		},
+		{
+			"name": "CSS Doodle Garden",
+			"author": "Yuxi (YH)",
+			"url": "https://css-doodle.com/gallery"
+		},
+		{
+			"name": "Hover States Playground",
+			"author": "Codrops",
+			"url": "https://tympanus.net/Development/HoverEffectIdeas/"
+		},
+		{
+			"name": "The Aviator Canvas Game",
+			"author": "Marco Barría",
+			"url": "https://codepen.io/Yakudoo/full/YXxmYR"
+		},
+		{
+			"name": "Web MIDI Synth",
+			"author": "Chris Wilson",
+			"url": "https://webaudio.github.io/web-midi-synth/"
+		}
+	]
+}
