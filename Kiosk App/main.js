@@ -10,7 +10,8 @@ const PROJECTS_FILE_NAME = 'projects.json';
 const DEFAULT_CONFIG = {
   titleCardDurationMs: 3000,
   backgroundColor: '#080808',
-  backgroundImagePath: ''
+  backgroundImagePath: '',
+  idleShuffleTimeoutMs: 60000
 };
 const SERIAL_SCAN_INTERVAL_MS = 5000;
 
@@ -32,6 +33,8 @@ let serialScanInProgress = false;
 let isTitleCardVisible = false;
 let titleCardLoadingPromise = null;
 let missingProjectsAlertShown = false;
+let idleTimerId = null;
+let mouseHoldIntervalId = null;
 
 function resolveBackgroundImageParam(imagePath) {
   if (!imagePath || typeof imagePath !== 'string') {
@@ -122,6 +125,62 @@ function getTitleCardDurationMs() {
   return DEFAULT_CONFIG.titleCardDurationMs;
 }
 
+function getIdleShuffleTimeoutMs() {
+  const configured = config.idleShuffleTimeoutMs;
+  if (configured === null || configured === false) return 0;
+  const timeout = Number(configured);
+  if (Number.isFinite(timeout) && timeout > 0) {
+    return timeout;
+  }
+  if (timeout === 0) return 0;
+  return DEFAULT_CONFIG.idleShuffleTimeoutMs;
+}
+
+function resetIdleTimer() {
+  if (idleTimerId) {
+    clearTimeout(idleTimerId);
+    idleTimerId = null;
+  }
+
+  const timeout = getIdleShuffleTimeoutMs();
+  if (!Number.isFinite(timeout) || timeout <= 0) {
+    return;
+  }
+
+  idleTimerId = setTimeout(() => {
+    idleTimerId = null;
+    handleIdleTimeout();
+  }, timeout);
+}
+
+function startMouseHoldInterval() {
+  if (mouseHoldIntervalId) return;
+  mouseHoldIntervalId = setInterval(() => resetIdleTimer(), 250);
+}
+
+function stopMouseHoldInterval() {
+  if (!mouseHoldIntervalId) return;
+  clearInterval(mouseHoldIntervalId);
+  mouseHoldIntervalId = null;
+}
+
+function selectRandomProjectIndex(excludeIndex) {
+  if (!projects.length) return 0;
+  if (projects.length === 1) return 0;
+
+  let idx = Math.floor(Math.random() * projects.length);
+  if (idx === excludeIndex) {
+    idx = (idx + 1 + Math.floor(Math.random() * (projects.length - 1))) % projects.length;
+  }
+  return idx;
+}
+
+function handleIdleTimeout() {
+  if (!projects.length) return;
+  const nextIndex = selectRandomProjectIndex(currentProjectIndex);
+  loadProject(nextIndex);
+}
+
 function showProjectAfterTitleCard(project) {
   if (!mainWindow) {
     throw new Error('Main window is not available to display the project.');
@@ -164,6 +223,7 @@ function loadProject(index) {
 
   currentProjectIndex = index;
   showProjectAfterTitleCard(project);
+  resetIdleTimer();
 }
 
 function showNextProject() {
@@ -183,8 +243,10 @@ function handleSerialData(data) {
   for (const char of input) {
     if (char === '>') {
       showNextProject();
+      resetIdleTimer();
     } else if (char === '<') {
       showPreviousProject();
+      resetIdleTimer();
     }
   }
 }
@@ -295,10 +357,26 @@ function createWindow() {
     if (titleCardTimeoutId) clearTimeout(titleCardTimeoutId);
     titleCardTimeoutId = null;
     mainWindow = null;
+    stopMouseHoldInterval();
   });
 
   win.webContents.on('before-input-event', (_event, input) => {
+    if (input.type === 'mouseDown') {
+      resetIdleTimer();
+      startMouseHoldInterval();
+      return;
+    }
+    if (input.type === 'mouseUp') {
+      resetIdleTimer();
+      stopMouseHoldInterval();
+      return;
+    }
+    if (input.type === 'mouseMove' || input.type === 'mouseWheel') {
+      resetIdleTimer();
+      return;
+    }
     if (input.type !== 'keyDown') return;
+    resetIdleTimer();
     if (input.meta && input.key === 'ArrowRight') {
       showNextProject();
       return;
@@ -313,6 +391,41 @@ function createWindow() {
       showPreviousProject();
     }
   });
+
+  const resetEvents = [
+    'cursor-changed',
+    'did-start-navigation',
+    'did-navigate',
+    'did-frame-finish-load',
+    'paint',
+    'scroll-touch-begin',
+    'scroll-touch-end',
+    'scroll-begin',
+    'scroll-end',
+    'mouse-down',
+    'mouse-up',
+    'mouse-enter',
+    'mouse-leave',
+    'pointer-lock-change',
+    'mouse-wheel',
+    'touch-start',
+    'touch-end',
+    'touch-move',
+    'gesture-begin',
+    'gesture-end',
+    'gesture-start',
+    'gestureupdate',
+    'gestureend'
+  ];
+
+  for (const eventName of resetEvents) {
+    win.webContents.on(eventName, () => resetIdleTimer());
+  }
+
+  win.webContents.on('input-event', () => resetIdleTimer());
+
+  win.on('blur', () => stopMouseHoldInterval());
+  win.on('leave-full-screen', () => stopMouseHoldInterval());
 
   currentProjectIndex = Math.floor(Math.random() * projects.length);
   loadProject(currentProjectIndex);
@@ -457,4 +570,9 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   stopSerialMonitoring();
+  if (idleTimerId) {
+    clearTimeout(idleTimerId);
+    idleTimerId = null;
+  }
+  stopMouseHoldInterval();
 });
