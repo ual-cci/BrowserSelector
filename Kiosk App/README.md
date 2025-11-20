@@ -3,7 +3,7 @@
 BrowserSelector is a fullscreen Electron-based kiosk experience that showcases a curated playlist of interactive web projects. Each project appears with a customizable title card before the browser window loads the live site, making it ideal for gallery installations, demos, or classroom exhibitions.
 
 ## Key Features
-- Fullscreen Chromium window with title-card interstitials to highlight project name and author.
+- Fullscreen Chromium window with title-card interstitials to highlight project title and author.
 - `projects.json` driven playlist with optional global config (e.g., `titleCardDurationMs`).
 - Serial input support (e.g., microcontrollers sending `<` or `>` characters) to cycle projects hands-free.
 - Keyboard navigation with both arrow keys and ⌘ + arrow shortcuts for quick manual control.
@@ -14,7 +14,7 @@ BrowserSelector is a fullscreen Electron-based kiosk experience that showcases a
    ```
    npm install
    ```
-2. Add or edit `projects.json` in the repo (during development) or in the packaged app's directory/Desktop/Downloads. Provide an array of `{ name, author, url }` entries and optional `config`.
+2. Add or edit `projects.json` in the repo (during development) or in the packaged app's directory/Desktop/Downloads. Provide an array of `{ title, author, url }` entries and optional `config`.
 3. Launch the kiosk:
    ```
    npm start

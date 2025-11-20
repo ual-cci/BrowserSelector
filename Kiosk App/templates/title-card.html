@@ -7,7 +7,7 @@
   </head>
   <body>
     <div class="card">
-      <div id="projectName" class="project-name">Loading…</div>
+      <div id="projectTitle" class="project-title">Loading…</div>
       <div class="author">
         by <span id="projectAuthor">Loading…</span>
       </div>
@@ -15,13 +15,13 @@
     <script>
       window.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
-        const projectName = params.get('name') || 'Untitled Project';
+        const projectTitle = params.get('title') || 'Untitled Project';
         const projectAuthor = params.get('author') || 'Unknown Author';
 
-        const nameEl = document.getElementById('projectName');
+        const titleEl = document.getElementById('projectTitle');
         const authorEl = document.getElementById('projectAuthor');
 
-        if (nameEl) nameEl.textContent = projectName;
+        if (titleEl) titleEl.textContent = projectTitle;
         if (authorEl) authorEl.textContent = projectAuthor;
       });
     </script>

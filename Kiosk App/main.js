@@ -30,7 +30,7 @@ let serialScanInProgress = false;
 
 function buildTitleCardUrl(project) {
   const url = new URL(pathToFileURL(titleCardTemplatePath).href);
-  url.searchParams.set('name', project.name ?? 'Untitled Project');
+  url.searchParams.set('title', project.title ?? 'Untitled Project');
   url.searchParams.set('author', project.author ?? 'Unknown Author');
   return url.toString();
 }
