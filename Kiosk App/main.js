@@ -11,7 +11,8 @@ const DEFAULT_CONFIG = {
 	titleCardDurationMs: 3000,
 	backgroundColor: '#080808',
 	backgroundImagePath: '',
-	idleShuffleTimeoutMs: 60000
+	idleShuffleTimeoutMs: 60000,
+	password: ''
 };
 const SERIAL_SCAN_INTERVAL_MS = 5000;
 
@@ -35,6 +36,8 @@ let titleCardLoadingPromise = null;
 let missingProjectsAlertShown = false;
 let idleTimerId = null;
 let mouseHoldIntervalId = null;
+let passwordValidated = false;
+let passwordWindow = null;
 
 function resolveBackgroundImageParam(imagePath) {
 	if (!imagePath || typeof imagePath !== 'string') {
@@ -342,6 +345,59 @@ function stopSerialMonitoring() {
 	cleanupSerialPort();
 }
 
+function showPasswordDialog() {
+	return new Promise((resolve, reject) => {
+		if (!mainWindow) {
+			reject(new Error('Main window not available'));
+			return;
+		}
+
+		// If password window is already open, don't create another one
+		if (passwordWindow && !passwordWindow.isDestroyed()) {
+			reject(new Error('Password dialog already open'));
+			return;
+		}
+
+		passwordWindow = new BrowserWindow({
+			parent: mainWindow,
+			modal: true,
+			width: 400,
+			height: 400,
+			resizable: false,
+			frame: true,
+			webPreferences: {
+				nodeIntegration: true,
+				contextIsolation: false
+			}
+		});
+
+		const passwordDialogUrl = pathToFileURL(path.join(__dirname, 'templates', 'password-dialog.html')).href;
+		passwordWindow.loadURL(passwordDialogUrl);
+
+		passwordWindow.webContents.once('did-finish-load', () => {
+			passwordWindow.webContents.executeJavaScript(`
+				document.getElementById('password').focus();
+			`);
+		});
+
+		passwordWindow.webContents.on('ipc-message', (_event, channel, password) => {
+			if (channel === 'password-submit') {
+				passwordWindow.close();
+				passwordWindow = null;
+				resolve(password);
+			} else if (channel === 'password-cancel') {
+				passwordWindow.close();
+				passwordWindow = null;
+			}
+		});
+
+		passwordWindow.on('closed', () => {
+			passwordWindow = null;
+			reject(new Error('Dialog cancelled'));
+		});
+	});
+}
+
 function createWindow() {
 	const win = new BrowserWindow({
 		fullscreen: true,
@@ -387,6 +443,33 @@ function createWindow() {
 		}
 		if (input.type !== 'keyDown') return;
 		resetIdleTimer();
+		
+		// Handle quit shortcuts (Command+Q on Mac, Alt+F4 on Windows/Linux)
+		const isQuitShortcut = 
+			(input.meta && input.key === 'q') || // Command+Q on Mac
+			(input.alt && input.key === 'F4');    // Alt+F4 on Windows/Linux
+		
+		if (isQuitShortcut) {
+			const password = config.password?.trim();
+			if (password) {
+				_event.preventDefault();
+				void (async () => {
+					try {
+						const enteredPassword = await showPasswordDialog();
+						if (enteredPassword === password) {
+							passwordValidated = true;
+							app.quit();
+						}
+						// If password doesn't match, silently close (no error shown)
+					} catch (err) {
+						// Dialog was cancelled, silently ignore
+					}
+				})();
+				return;
+			}
+			// If no password is set, allow normal quit behavior
+		}
+		
 		if (input.meta && input.key === 'ArrowRight') {
 			showNextProject();
 			return;
@@ -578,7 +661,26 @@ app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', (event) => {
+	const password = config.password?.trim();
+	if (password && !passwordValidated) {
+		event.preventDefault();
+		// Trigger password dialog if quit was attempted through other means
+		void (async () => {
+			try {
+				const enteredPassword = await showPasswordDialog();
+				if (enteredPassword === password) {
+					passwordValidated = true;
+					app.quit();
+				}
+				// If password doesn't match, silently close (no error shown)
+			} catch (err) {
+				// Dialog was cancelled, silently ignore
+			}
+		})();
+		return;
+	}
+	
 	stopSerialMonitoring();
 	if (idleTimerId) {
 		clearTimeout(idleTimerId);

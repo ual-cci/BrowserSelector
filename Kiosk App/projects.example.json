@@ -1,0 +1,37 @@
+{
+	"config": {
+		"titleCardDurationMs": 3000,
+		"backgroundColor": "#080808",
+		"backgroundImagePath": "",
+		"idleShuffleTimeoutMs": 60000,
+		"password": ""
+	},
+	"projects": [
+		{
+			"title": "Apple",
+			"author": "Apple Inc.",
+			"url": "https://www.apple.com"
+		},
+		{
+			"title": "Google",
+			"author": "Google LLC",
+			"url": "https://www.google.com"
+		},
+		{
+			"title": "Microsoft",
+			"author": "Microsoft Corporation",
+			"url": "https://www.microsoft.com"
+		},
+		{
+			"title": "Amazon",
+			"author": "Amazon.com, Inc.",
+			"url": "https://www.amazon.com"
+		},
+		{
+			"title": "Meta",
+			"author": "Meta Platforms, Inc.",
+			"url": "https://www.meta.com"
+		}
+	]
+}
+

@@ -3,7 +3,8 @@
 		"titleCardDurationMs": 3000,
 		"backgroundColor": "#080808",
 		"backgroundImagePath": "./bg.png",
-		"idleShuffleTimeoutMs": 0
+		"idleShuffleTimeoutMs": 0,
+		"password": "cci"
 	},
 	"projects": [
 		{
