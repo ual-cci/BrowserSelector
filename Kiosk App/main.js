@@ -38,6 +38,8 @@ let idleTimerId = null;
 let mouseHoldIntervalId = null;
 let passwordValidated = false;
 let passwordWindow = null;
+let appStartTime = null;
+const PASSWORD_GRACE_PERIOD_MS = 10000; // 10 seconds
 
 function resolveBackgroundImageParam(imagePath) {
 	if (!imagePath || typeof imagePath !== 'string') {
@@ -345,6 +347,12 @@ function stopSerialMonitoring() {
 	cleanupSerialPort();
 }
 
+function isWithinPasswordGracePeriod() {
+	if (!appStartTime) return false;
+	const elapsed = Date.now() - appStartTime;
+	return elapsed < PASSWORD_GRACE_PERIOD_MS;
+}
+
 function showPasswordDialog() {
 	return new Promise((resolve, reject) => {
 		if (!mainWindow) {
@@ -451,7 +459,7 @@ function createWindow() {
 		
 		if (isQuitShortcut) {
 			const password = config.password?.trim();
-			if (password) {
+			if (password && !isWithinPasswordGracePeriod()) {
 				_event.preventDefault();
 				void (async () => {
 					try {
@@ -467,7 +475,7 @@ function createWindow() {
 				})();
 				return;
 			}
-			// If no password is set, allow normal quit behavior
+			// If no password is set or within grace period, allow normal quit behavior
 		}
 		
 		if (input.meta && input.key === 'ArrowRight') {
@@ -645,6 +653,7 @@ async function showMissingProjectsMessage(error) {
 }
 
 app.whenReady().then(() => {
+	appStartTime = Date.now();
 	try {
 		loadProjectsData();
 	} catch (err) {
@@ -663,7 +672,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', (event) => {
 	const password = config.password?.trim();
-	if (password && !passwordValidated) {
+	if (password && !passwordValidated && !isWithinPasswordGracePeriod()) {
 		event.preventDefault();
 		// Trigger password dialog if quit was attempted through other means
 		void (async () => {

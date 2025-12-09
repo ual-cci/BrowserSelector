@@ -8,7 +8,7 @@ BrowserSelector is a fullscreen Electron-based kiosk experience that showcases a
 - Serial input support (e.g., microcontrollers sending `<` or `>` characters) to cycle projects hands-free.
 - Keyboard navigation with both arrow keys and ⌘ + arrow shortcuts for quick manual control.
 - Auto-scan for common `usbmodem` serial devices plus graceful cleanup on quit.
-- Optional password protection to prevent unauthorized quitting (Command+Q on macOS, Alt+F4 on Windows/Linux).
+- Optional password protection to prevent unauthorized quitting (Command+Q on macOS, Alt+F4 on Windows/Linux) with a 10-second grace period after launch to prevent lockout.
 
 ## Getting Started
 1. Install dependencies:
@@ -34,7 +34,7 @@ BrowserSelector is a fullscreen Electron-based kiosk experience that showcases a
 - `config.backgroundColor` sets the fallback color behind the title card (`#080808` by default).
 - `config.backgroundImagePath` can point to a local file (absolute or relative to `projects.json`) or a remote URL that will fill the viewport behind the card. Relative paths are resolved against the directory containing `projects.json`.
 - `config.idleShuffleTimeoutMs` sets how long the kiosk waits (defaults to 60000 ms) before automatically loading a random project when there is no interaction.
-- `config.password` (optional) sets a password required to quit the application. When set, quit shortcuts (Command+Q on macOS, Alt+F4 on Windows/Linux) will prompt for the password. If the password is incorrect or the dialog is cancelled, the app will continue running. Leave empty or omit to allow normal quit behavior.
+- `config.password` (optional) sets a password required to quit the application. When set, quit shortcuts (Command+Q on macOS, Alt+F4 on Windows/Linux) will prompt for the password. If the password is incorrect or the dialog is cancelled, the app will continue running. Leave empty or omit to allow normal quit behavior. **Safety feature**: For the first 10 seconds after launch, the app can be quit without a password to prevent lockout if the password was mistyped and the app auto-starts after login.
 - When packaged, the app searches for `projects.json` next to the executable, inside the `.app/Contents` directory, alongside the `.app` bundle itself, and then in `~/Desktop` and `~/Downloads` (in that order).
 - Serial devices are scanned every 5 seconds; any device path containing `usbmodem` or `usb.modem` is considered a candidate.
 
