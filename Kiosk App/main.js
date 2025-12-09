@@ -21,6 +21,7 @@ let projects = [];
 let projectsFilePath = null;
 
 let currentProjectIndex = 0;
+let currentProjectUrl = null;
 let mainWindow = null;
 let titleCardTimeoutId = null;
 const titleCardTemplatePath = path.join(
@@ -217,6 +218,33 @@ function showProjectAfterTitleCard(project) {
 	})();
 }
 
+function extractDomain(url) {
+	try {
+		const urlObj = new URL(url);
+		// Extract the hostname (e.g., "example.com" from "https://www.example.com/path")
+		return urlObj.hostname;
+	} catch (err) {
+		console.warn('Failed to extract domain from URL:', url, err);
+		return null;
+	}
+}
+
+function isSameDomain(url1, url2) {
+	const domain1 = extractDomain(url1);
+	const domain2 = extractDomain(url2);
+	
+	if (!domain1 || !domain2) {
+		return false;
+	}
+	
+	// Remove 'www.' prefix for comparison
+	const normalizeDomain = (domain) => {
+		return domain.replace(/^www\./, '');
+	};
+	
+	return normalizeDomain(domain1) === normalizeDomain(domain2);
+}
+
 function loadProject(index) {
 	if (!projects.length) {
 		throw new Error('No projects are loaded. Check projects.json.');
@@ -227,6 +255,7 @@ function loadProject(index) {
 	}
 
 	currentProjectIndex = index;
+	currentProjectUrl = project.url;
 	showProjectAfterTitleCard(project);
 	resetIdleTimer();
 }
@@ -524,6 +553,84 @@ function createWindow() {
 	}
 
 	win.webContents.on('input-event', () => resetIdleTimer());
+
+	// Intercept navigation attempts to restrict browsing to the current project's domain
+	win.webContents.on('will-navigate', (event, navigationUrl) => {
+		if (!currentProjectUrl) {
+			return; // Allow navigation if no project is loaded
+		}
+
+		// Check if the navigation is within the same domain
+		if (!isSameDomain(navigationUrl, currentProjectUrl)) {
+			// Prevent navigation
+			event.preventDefault();
+			
+			// Show alert dialog
+			dialog.showMessageBox(win, {
+				type: 'warning',
+				title: 'Navigation Restricted',
+				message: 'Browsing to that site is restricted.',
+				detail: `You can only browse within ${extractDomain(currentProjectUrl)}`,
+				buttons: ['OK'],
+				defaultId: 0
+			}).then(() => {
+				// After user clicks OK, navigate back to the current project URL
+				if (mainWindow && currentProjectUrl) {
+					mainWindow.loadURL(currentProjectUrl).catch(err =>
+						console.error('Failed to navigate back to project URL:', err)
+					);
+				}
+			});
+		}
+	});
+
+	// Also handle navigation in iframes and other frames
+	win.webContents.on('will-navigate-in-page', (event, navigationUrl) => {
+		if (!currentProjectUrl) {
+			return;
+		}
+
+		if (!isSameDomain(navigationUrl, currentProjectUrl)) {
+			event.preventDefault();
+			
+			dialog.showMessageBox(win, {
+				type: 'warning',
+				title: 'Navigation Restricted',
+				message: 'Browsing to that site is restricted.',
+				detail: `You can only browse within ${extractDomain(currentProjectUrl)}`,
+				buttons: ['OK'],
+				defaultId: 0
+			}).then(() => {
+				if (mainWindow && currentProjectUrl) {
+					mainWindow.loadURL(currentProjectUrl).catch(err =>
+						console.error('Failed to navigate back to project URL:', err)
+					);
+				}
+			});
+		}
+	});
+
+	// Prevent opening new windows to external sites
+	win.webContents.setWindowOpenHandler(({ url }) => {
+		if (!currentProjectUrl) {
+			return { action: 'deny' };
+		}
+
+		if (!isSameDomain(url, currentProjectUrl)) {
+			dialog.showMessageBox(win, {
+				type: 'warning',
+				title: 'Navigation Restricted',
+				message: 'Browsing to that site is restricted.',
+				detail: `You can only browse within ${extractDomain(currentProjectUrl)}`,
+				buttons: ['OK'],
+				defaultId: 0
+			});
+			return { action: 'deny' };
+		}
+
+		// Allow same-domain windows (though in kiosk mode this might not be ideal)
+		return { action: 'deny' }; // Deny all new windows in kiosk mode
+	});
 
 	win.on('blur', () => stopMouseHoldInterval());
 	win.on('leave-full-screen', () => stopMouseHoldInterval());
